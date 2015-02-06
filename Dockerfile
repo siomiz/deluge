@@ -16,6 +16,8 @@ RUN apt-get update \
 RUN deluged --config /opt/deluged.conf.d && sleep 3 && pkill deluged
 RUN deluge-web --fork --config /opt/deluge-web.conf.d && sleep 3 && pkill deluge-web
 
+VOLUME ["/opt/deluge-web.conf.d"]
+
 EXPOSE 8112 58846
 
 CMD ["deluge-web", "--config", "/opt/deluge-web.conf.d", "--base", "/deluge/"]
