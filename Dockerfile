@@ -2,22 +2,24 @@ FROM ubuntu:14.04
 
 MAINTAINER Tomohisa Kusano <siomiz@gmail.com>
 
-ENV DEBIAN_FRONTEND noninteractive
-
-RUN apt-get update \
-	&& apt-get install -y software-properties-common \
-	&& add-apt-repository -y ppa:deluge-team/ppa \
+RUN gpg --keyserver keyserver.ubuntu.com --recv-keys 249AD24C \
+	&& gpg --export | apt-key add - \
+	&& echo "deb http://ppa.launchpad.net/deluge-team/ppa/ubuntu trusty main" > /etc/apt/sources.list.d/deluge.list \
 	&& apt-get update \
-	&& apt-get install -y deluged deluge-web \
-	&& apt-get purge -y software-properties-common \
-	&& apt-get autoremove -y --purge \
-	&& apt-get clean
+	&& apt-get install -y deluged deluge-web supervisor \
+	&& useradd -m deluge \
+	&& mkdir /opt/deluge-web.conf.d \
+	&& chown deluge /var/log/supervisor /opt/deluge-web.conf.d
 
-RUN deluged --config /opt/deluged.conf.d && sleep 3 && pkill deluged
-RUN deluge-web --fork --config /opt/deluge-web.conf.d && sleep 3 && pkill deluge-web
+ADD supervisord.conf /etc/supervisor/
 
 VOLUME ["/opt/deluge-web.conf.d"]
 
+WORKDIR /home/deluge
+
+USER deluge
+
 EXPOSE 8112 58846
 
-CMD ["deluge-web", "--config", "/opt/deluge-web.conf.d", "--base", "/deluge/"]
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/supervisord.conf"]
+
